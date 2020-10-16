@@ -56,6 +56,8 @@ jobs:
         set -eux
         sudo snap install ./microk8s*.snap --classic --dangerous
         sudo usermod --append --groups microk8s $USER
+        sudo microk8s status --wait-ready
+        sudo microk8s kubectl -n kube-system rollout status ds/calico-node
 
     - name: Enable kubeflow
       run: |
@@ -136,6 +138,8 @@ jobs:
         juju ssh ubuntu/0 <<EOF
           set -eux
           sudo snap install ./microk8s*.snap --classic --dangerous
+          sudo microk8s status --wait-ready
+          sudo microk8s kubectl -n kube-system rollout status ds/calico-node
           sudo usermod --append --groups microk8s ubuntu
         EOF
 

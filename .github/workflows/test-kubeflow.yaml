@@ -71,6 +71,7 @@ jobs:
     - name: Test kubeflow
       run: |
         set -eux
+        export JUJU_DATA=/var/snap/microk8s/current/juju/share/juju
         sudo apt update
         sudo apt install -y libssl-dev python3-setuptools
         sudo pip3 install pytest sh kfp requests pyyaml
@@ -79,7 +80,7 @@ jobs:
         trap 'pkill -f svc/pipelines-api' SIGINT SIGTERM EXIT
         sudo microk8s kubectl -n kubeflow port-forward svc/pipelines-api 8888:8888 &
         (i=10; while ! curl localhost:8888 ; do ((--i)) || exit; sleep 1; done)
-        sudo pytest -vvs -m ${{ matrix.bundle }}
+        sudo -E pytest -vvs -m ${{ matrix.bundle }}
 
     - name: Get MicroK8s pods
       run: sudo microk8s kubectl get pods -A
@@ -159,6 +160,7 @@ jobs:
       run: |
         juju ssh ubuntu/0 <<EOF
           set -eux
+          export JUJU_DATA=/var/snap/microk8s/current/juju/share/juju
           sudo apt update
           sudo apt install -y libssl-dev python3-setuptools
           sudo pip3 install pytest sh kfp requests pyyaml
@@ -171,7 +173,7 @@ jobs:
         EOF
 
     - name: Get MicroK8s pods
-      run: sudo microk8s kubectl get pods -A
+      run: juju ssh ubuntu/0 sudo microk8s kubectl get pods -A
       if: failure()
 
     - name: Generate inspect tarball

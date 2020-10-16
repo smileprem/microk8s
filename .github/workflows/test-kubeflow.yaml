@@ -169,11 +169,21 @@ jobs:
           trap 'pkill -f svc/pipelines-api' SIGINT SIGTERM EXIT
           microk8s kubectl -n kubeflow port-forward svc/pipelines-api 8888:8888 &
           (i=10; while ! curl localhost:8888 ; do ((--i)) || exit; sleep 1; done)
-          pytest -vvs -m full
+          pytest -vvs -m full -k 'not kubectl'
+          pytest -vvs -m full -k 'kubectl'
         EOF
 
     - name: Get MicroK8s pods
-      run: juju ssh ubuntu/0 sudo microk8s kubectl get pods -A
+      run: juju ssh ubuntu/0 sudo microk8s kubectl get pods -A --sort-by=.metadata.name
+      if: failure()
+
+    - name: Get pipeline logs
+      run: |
+        juju ssh ubuntu/0 <<EOF
+        set -eux
+        cd bundle-kubeflow
+        ./tests/dump-pipeline-logs.sh
+        EOF
       if: failure()
 
     - name: Generate inspect tarball
